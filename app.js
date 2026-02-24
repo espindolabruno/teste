@@ -59,7 +59,10 @@ async function init() {
     // Step Rendering Logic
     function renderStep() {
         updateProgress();
-        currentStepContainer.classList.remove('active');
+
+        // Only add fade out/in for main transitions (Step changes)
+        currentStepContainer.style.opacity = '0';
+        currentStepContainer.style.transform = 'translateX(20px)';
 
         setTimeout(() => {
             currentStepContainer.innerHTML = '';
@@ -68,9 +71,10 @@ async function init() {
             else if (currentStepIndex >= 1 && currentStepIndex <= 4) renderCampaignStep();
             else if (currentStepIndex === 5) renderDashboard();
 
-            currentStepContainer.classList.add('active');
+            currentStepContainer.style.opacity = '1';
+            currentStepContainer.style.transform = 'translateX(0)';
             updateNavButtons();
-        }, 100);
+        }, 150);
     }
 
     function updateProgress() {
@@ -86,9 +90,6 @@ async function init() {
     function updateNavButtons() {
         prevBtn.disabled = currentStepIndex === 0;
         nextBtn.innerText = currentStepIndex === 5 ? 'Salvar Configuração' : 'Próximo';
-        if (currentStepIndex === 5) {
-            // Check if client is already saved to show "Save" or just "Done"
-        }
     }
 
     // Step 0: Budget & Name
@@ -134,20 +135,22 @@ async function init() {
 
         currentStepContainer.innerHTML = `
             <div class="step-card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <h2 class="step-title">${cat.name}</h2>
-                    <span class="branch-tag" style="font-size:1rem; padding: 0.5rem 1rem;">Verba: ${amount}</span>
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
+                    <div>
+                        <h2 class="step-title">${cat.name}</h2>
+                        <span class="branch-tag" style="font-size:1rem; padding: 0.4rem 0.8rem;">Verba Alocada: ${amount}</span>
+                    </div>
+                    <button class="secondary-btn" id="selectAllBtn" style="padding: 0.6rem 1.2rem; font-size: 0.85rem;">Usar Estratégia Recomendada</button>
                 </div>
-                <p class="step-desc">${cat.percentage}% do orçamento. Selecione os públicos e criativos ideais.</p>
                 
                 <div class="content-grid">
                     <div class="info-group">
                         <h3>Públicos</h3>
-                        <ul class="info-list">
+                        <ul class="info-list" id="audiencesList">
                             ${cat.audiences.map(aud => {
             const isSelected = clientData.selections[cat.id].audiences.includes(aud.id);
             return `
-                                    <li class="${isSelected ? 'selected' : ''}" onclick="window.toggleSelection('${cat.id}', 'audiences', '${aud.id}')">
+                                    <li class="${isSelected ? 'selected' : ''}" data-id="${aud.id}" data-type="audiences">
                                         <div class="item-main">
                                             <div class="item-checkbox"></div>
                                             <span>${aud.name}</span>
@@ -159,11 +162,11 @@ async function init() {
                     </div>
                     <div class="info-group">
                         <h3>Criativos</h3>
-                        <ul class="info-list">
+                        <ul class="info-list" id="creativesList">
                             ${cat.creatives.map(cre => {
             const isSelected = clientData.selections[cat.id].creatives.includes(cre.id);
             return `
-                                    <li class="${isSelected ? 'selected' : ''}" onclick="window.toggleSelection('${cat.id}', 'creatives', '${cre.id}')">
+                                    <li class="${isSelected ? 'selected' : ''}" data-id="${cre.id}" data-type="creatives">
                                         <div class="item-main">
                                             <div class="item-checkbox"></div>
                                             <span>${cre.name}</span>
@@ -177,15 +180,50 @@ async function init() {
                 </div>
             </div>
         `;
+
+        // Event delegation to prevent flicker
+        const handleToggle = (e) => {
+            const li = e.target.closest('li');
+            if (li && !e.target.classList.contains('creative-link')) {
+                const id = li.dataset.id;
+                const type = li.dataset.type;
+                toggleSelectionOptimized(cat.id, type, id, li);
+            }
+        };
+
+        const audList = document.getElementById('audiencesList');
+        const creList = document.getElementById('creativesList');
+        audList.addEventListener('click', handleToggle);
+        creList.addEventListener('click', handleToggle);
+
+        document.getElementById('selectAllBtn').addEventListener('click', () => {
+            selectAllItems(cat.id, audList, creList);
+        });
     }
 
-    window.toggleSelection = (catId, type, itemId) => {
+    function toggleSelectionOptimized(catId, type, itemId, element) {
         const list = clientData.selections[catId][type];
         const idx = list.indexOf(itemId);
-        if (idx > -1) list.splice(idx, 1);
-        else list.push(itemId);
-        renderStep();
-    };
+
+        if (idx > -1) {
+            list.splice(idx, 1);
+            element.classList.remove('selected');
+        } else {
+            list.push(itemId);
+            element.classList.add('selected');
+        }
+    }
+
+    function selectAllItems(catId, audList, creList) {
+        const cat = database.categories.find(c => c.id === catId);
+
+        clientData.selections[catId].audiences = cat.audiences.map(a => a.id);
+        clientData.selections[catId].creatives = cat.creatives.map(c => c.id);
+
+        // Update DOM without full re-render
+        audList.querySelectorAll('li').forEach(li => li.classList.add('selected'));
+        creList.querySelectorAll('li').forEach(li => li.classList.add('selected'));
+    }
 
     // Step 5: Dashboard Mind Map
     function renderDashboard() {
@@ -198,8 +236,8 @@ async function init() {
                 style: 'currency',
                 currency: 'BRL'
             });
-            const audiences = cat.audiences.filter(a => clientData.selections[cat.id].audiences.includes(a.id));
-            const creatives = cat.creatives.filter(c => clientData.selections[cat.id].creatives.includes(c.id));
+            const audiencesArr = cat.audiences.filter(a => clientData.selections[cat.id].audiences.includes(a.id));
+            const creativesArr = cat.creatives.filter(c => clientData.selections[cat.id].creatives.includes(c.id));
 
             return `
                             <div class="branch">
@@ -208,8 +246,8 @@ async function init() {
                                     <span class="branch-tag">${amount}</span>
                                 </div>
                                 <div class="branch-items">
-                                    <strong>Públicos:</strong> ${audiences.map(a => a.name).join(', ') || 'Nenhum'}<br>
-                                    <strong>Criativos:</strong> ${creatives.map(c => c.name).join(', ') || 'Nenhum'}
+                                    <strong>Públicos:</strong> ${audiencesArr.map(a => a.name).join(', ') || 'Nenhum'}<br>
+                                    <strong>Criativos:</strong> ${creativesArr.map(c => c.name).join(', ') || 'Nenhum'}
                                 </div>
                             </div>
                         `;
@@ -221,7 +259,8 @@ async function init() {
 
     // Persistence
     function saveClient() {
-        const newClient = { ...clientData, id: Date.now() };
+        const newClient = JSON.parse(JSON.stringify(clientData));
+        newClient.id = Date.now();
         savedClients.push(newClient);
         localStorage.setItem('agro_campaigns', JSON.stringify(savedClients));
         renderSavedClients();
