@@ -248,14 +248,14 @@ async function init() {
                 </header>
 
                 <main class="dashboard-grid">
-                    <section>
+                    <section class="dist-section">
                         <h3 class="dist-section-title">Distribuição de Verba</h3>
                         <div class="dist-list">
                             ${database.categories.map(cat => renderDistCard(cat)).join('')}
-                            <div class="dist-card" style="background: #F8F9FA; border-left: 4px solid var(--primary-color);">
-                                <span class="dist-name" style="font-weight:800;">TOTAL</span>
+                            <div class="dist-card total-card">
+                                <span class="dist-name">TOTAL</span>
                                 <div class="dist-bar-cont">
-                                    <div class="dist-bar-fill" style="width: 100%; background: var(--primary-color);"></div>
+                                    <div class="dist-bar-fill" style="width: 100%;"></div>
                                 </div>
                                 <div class="dist-val-group">
                                     <span class="dist-val">${totalBudgetStr}</span>
@@ -314,35 +314,6 @@ async function init() {
                         </div>
                     </section>
 
-                    <section class="bottom-grid">
-                        <div class="proj-card">
-                            <h3 class="dist-section-title" style="margin-bottom:2rem;">Projeção Geral da Campanha</h3>
-                            <div class="proj-grid">
-                                <div class="proj-item">
-                                    <span class="meta-label">Impressões</span>
-                                    <span class="meta-value">${Math.floor(clientData.budget * 12).toLocaleString()}</span>
-                                </div>
-                                <div class="proj-item">
-                                    <span class="meta-label">Cliques</span>
-                                    <span class="meta-value">${Math.floor(clientData.budget * 0.4).toLocaleString()}</span>
-                                </div>
-                                <div class="proj-item">
-                                    <span class="meta-label">Leads</span>
-                                    <span class="meta-value">${Math.floor(clientData.budget * 0.015).toLocaleString()}</span>
-                                </div>
-                                <div class="proj-item">
-                                    <span class="meta-label">CPL Projetado</span>
-                                    <span class="meta-value">R$ 80 - 100</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="diag-card">
-                            <h3 class="dist-section-title">Diagnóstico</h3>
-                            <div class="diag-text">
-                                Estratégia com foco equilibrado entre aquisição e conversão. Forte investimento em meio e fundo de funil indica priorização de geração direta de demanda.
-                            </div>
-                        </div>
-                    </section>
                 </main>
             </div>
         `;
