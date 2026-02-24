@@ -18,7 +18,7 @@
         {
           "id": "rec_cre_1",
           "name": "Vídeo Institucional",
-          "url": "https://drive.google.com/file/d/1SbQey9s-G_J6SoncjMwNQhsCsT5wG6FB/view?usp=sharing"
+          "url": "https://youtube.com/link-exemplo-1"
         },
         {
           "id": "rec_cre_2",
@@ -142,5 +142,4 @@
       ]
     }
   ]
-
 }
