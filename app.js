@@ -269,10 +269,11 @@ async function init() {
                         <h3 class="dist-section-title">Funil de Vendas</h3>
                         <div class="funnel-card">
                             <div class="funnel-visual">
-                                <div class="funnel-step" style="--step-index: 0">RECONHECIMENTO</div>
-                                <div class="funnel-step" style="--step-index: 1">OFERTA</div>
-                                <div class="funnel-step" style="--step-index: 2">REMARKETING</div>
-                                <div class="funnel-step" style="--step-index: 3">PROVA SOCIAL</div>
+                                <div class="funnel-step">RECONHECIMENTO</div>
+                                <div class="funnel-step">OFERTA</div>
+                                <div class="funnel-step">REMARKETING</div>
+                                <div class="funnel-step">PROVA SOCIAL</div>
+                                <div class="funnel-step">CONVERSÃO</div>
                             </div>
                         </div>
                     </aside>
@@ -343,7 +344,13 @@ async function init() {
             prova_social: { obj: 'Autoridade e reforço', meta: 'Visualização completa' }
         };
         const auds = cat.audiences.filter(a => clientData.selections[cat.id].audiences.includes(a.id)).map(a => a.name).join(', ') || 'Padronizado';
-        const cres = cat.creatives.filter(c => clientData.selections[cat.id].creatives.includes(c.id)).map(c => c.name).join(', ') || 'Sugeridos';
+        const selectedCreatives = cat.creatives.filter(c => clientData.selections[cat.id].creatives.includes(c.id));
+        const cresHtml = selectedCreatives.map(c => `
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem; background:#F8F9FA; padding:0.4rem; border-radius:6px;">
+                <span style="font-size:0.8rem;">${c.name}</span>
+                <button onclick="window.openVideo('${c.url}')" class="creative-link" style="border:none; cursor:pointer;">▶ Player</button>
+            </div>
+        `).join('') || '<p style="font-size:0.8rem; color:#A0AEC0;">Nenhum selecionado</p>';
 
         return `
             <div class="acc-item" id="acc-${cat.id}">
@@ -366,7 +373,9 @@ async function init() {
                         </div>
                         <div class="acc-block">
                             <h5>Criativos</h5>
-                            <p>${cres}</p>
+                            <div class="acc-creatives-list">
+                                ${cresHtml}
+                            </div>
                         </div>
                         <div class="acc-block">
                             <h5>Meta Estimada</h5>
@@ -385,6 +394,30 @@ async function init() {
 
     window.goEdit = () => { currentStepIndex = 0; renderStep(); };
     window.saveStrategy = saveClient;
+
+    // Video Modal Control
+    window.openVideo = (url) => {
+        const modal = document.getElementById('videoModal');
+        const player = document.getElementById('videoPlayer');
+
+        // Convert YouTube watch URL to embed URL if needed
+        let embedUrl = url;
+        if (url.includes('youtube.com/watch?v=')) {
+            embedUrl = url.replace('watch?v=', 'embed/') + '?autoplay=1';
+        } else if (url.includes('youtu.be/')) {
+            embedUrl = url.replace('youtu.be/', 'youtube.com/embed/') + '?autoplay=1';
+        }
+
+        player.src = embedUrl;
+        modal.style.display = 'flex';
+    };
+
+    window.closeVideo = () => {
+        const modal = document.getElementById('videoModal');
+        const player = document.getElementById('videoPlayer');
+        modal.style.display = 'none';
+        player.src = '';
+    };
 
     // Persistence
     function saveClient() {

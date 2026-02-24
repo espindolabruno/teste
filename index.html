@@ -56,6 +56,14 @@
         </div>
     </div>
 
+    <!-- Video Modal -->
+    <div id="videoModal" class="modal-overlay" onclick="window.closeVideo()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <span class="modal-close" onclick="window.closeVideo()">&times;</span>
+            <iframe id="videoPlayer" class="modal-iframe" allowfullscreen></iframe>
+        </div>
+    </div>
+
     <script src="app.js" type="module"></script>
 </body>
 
