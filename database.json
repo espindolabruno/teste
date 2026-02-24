@@ -18,12 +18,12 @@
         {
           "id": "rec_cre_1",
           "name": "Vídeo Institucional",
-          "url": "https://youtu.be/pQFOnlvtsJ8?si=Fyjdhrd3SQbZD-YI"
+          "url": "https://youtube.com/link-exemplo-1"
         },
         {
           "id": "rec_cre_2",
           "name": "Dicas de manejo",
-          "url": "https://drive.google.com/file/d/1SbQey9s-G_J6SoncjMwNQhsCsT5wG6FB/view?usp=sharing"
+          "url": "https://youtube.com/link-exemplo-2"
         },
         {
           "id": "rec_cre_3",
@@ -142,7 +142,4 @@
       ]
     }
   ]
-
 }
-
-

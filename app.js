@@ -400,12 +400,23 @@ async function init() {
         const modal = document.getElementById('videoModal');
         const player = document.getElementById('videoPlayer');
 
-        // Convert YouTube watch URL to embed URL if needed
         let embedUrl = url;
+
+        // YouTube Conversion
         if (url.includes('youtube.com/watch?v=')) {
             embedUrl = url.replace('watch?v=', 'embed/') + '?autoplay=1';
         } else if (url.includes('youtu.be/')) {
             embedUrl = url.replace('youtu.be/', 'youtube.com/embed/') + '?autoplay=1';
+        }
+
+        // Google Drive Conversion
+        // Drive URL: https://drive.google.com/file/d/ID/view?usp=sharing
+        // Embed URL: https://drive.google.com/file/d/ID/preview
+        if (url.includes('drive.google.com/file/d/')) {
+            const fileIdMatch = url.match(/\/d\/([^/]+)/);
+            if (fileIdMatch && fileIdMatch[1]) {
+                embedUrl = `https://drive.google.com/file/d/${fileIdMatch[1]}/preview`;
+            }
         }
 
         player.src = embedUrl;
