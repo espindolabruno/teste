@@ -33,6 +33,16 @@ async function init() {
         console.error('Erro ao carregar banco de dados:', error);
     }
 
+    // Global Enter Key Listener
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            // Prevent default form behavior if any
+            if (currentStepIndex < 5) {
+                nextBtn.click();
+            }
+        }
+    });
+
     // Navigation Events
     nextBtn.addEventListener('click', () => {
         if (currentStepIndex === 0 && !validateStep0()) return;
@@ -59,10 +69,7 @@ async function init() {
     // Step Rendering Logic
     function renderStep() {
         updateProgress();
-
-        // Only add fade out/in for main transitions (Step changes)
-        currentStepContainer.style.opacity = '0';
-        currentStepContainer.style.transform = 'translateX(20px)';
+        currentStepContainer.classList.remove('active');
 
         setTimeout(() => {
             currentStepContainer.innerHTML = '';
@@ -71,10 +78,9 @@ async function init() {
             else if (currentStepIndex >= 1 && currentStepIndex <= 4) renderCampaignStep();
             else if (currentStepIndex === 5) renderDashboard();
 
-            currentStepContainer.style.opacity = '1';
-            currentStepContainer.style.transform = 'translateX(0)';
+            currentStepContainer.classList.add('active');
             updateNavButtons();
-        }, 150);
+        }, 100);
     }
 
     function updateProgress() {
@@ -89,7 +95,7 @@ async function init() {
 
     function updateNavButtons() {
         prevBtn.disabled = currentStepIndex === 0;
-        nextBtn.innerText = currentStepIndex === 5 ? 'Salvar Configuração' : 'Próximo';
+        nextBtn.innerText = currentStepIndex === 5 ? 'Salvar Estratégia' : 'Próximo';
     }
 
     // Step 0: Budget & Name
@@ -106,6 +112,7 @@ async function init() {
                     <label>Orçamento Mensal (R$)</label>
                     <input type="number" id="inputBudget" value="${clientData.budget || ''}" placeholder="Ex: 5000">
                 </div>
+                <button class="recommended-btn" onclick="window.recommendStrategy()">✨ Gerar Estratégia Recomendada</button>
             </div>
         `;
 
@@ -115,6 +122,29 @@ async function init() {
         nameInp.addEventListener('input', (e) => clientData.name = e.target.value);
         budgetInp.addEventListener('input', (e) => clientData.budget = parseFloat(e.target.value) || 0);
     }
+
+    window.recommendStrategy = () => {
+        const nameInp = document.getElementById('inputClientName');
+        const budgetInp = document.getElementById('inputBudget');
+
+        if (!nameInp.value || !budgetInp.value || parseFloat(budgetInp.value) <= 0) {
+            alert('Por favor, preencha o nome e um orçamento válido antes de gerar a recomendação.');
+            return;
+        }
+
+        clientData.name = nameInp.value;
+        clientData.budget = parseFloat(budgetInp.value);
+
+        // Auto select everything
+        database.categories.forEach(cat => {
+            clientData.selections[cat.id].audiences = cat.audiences.map(a => a.id);
+            clientData.selections[cat.id].creatives = cat.creatives.map(c => c.id);
+        });
+
+        // Jump to dashboard
+        currentStepIndex = 5;
+        renderStep();
+    };
 
     function validateStep0() {
         if (!clientData.name || clientData.budget <= 0) {
@@ -135,22 +165,20 @@ async function init() {
 
         currentStepContainer.innerHTML = `
             <div class="step-card">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 2rem;">
-                    <div>
-                        <h2 class="step-title">${cat.name}</h2>
-                        <span class="branch-tag" style="font-size:1rem; padding: 0.4rem 0.8rem;">Verba Alocada: ${amount}</span>
-                    </div>
-                    <button class="secondary-btn" id="selectAllBtn" style="padding: 0.6rem 1.2rem; font-size: 0.85rem;">Usar Estratégia Recomendada</button>
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <h2 class="step-title">${cat.name}</h2>
+                    <span class="branch-tag" style="font-size:1rem; padding: 0.5rem 1rem;">Verba: ${amount}</span>
                 </div>
+                <p class="step-desc">${cat.percentage}% do orçamento. Selecione os públicos e criativos ideais.</p>
                 
                 <div class="content-grid">
                     <div class="info-group">
                         <h3>Públicos</h3>
-                        <ul class="info-list" id="audiencesList">
+                        <ul class="info-list">
                             ${cat.audiences.map(aud => {
             const isSelected = clientData.selections[cat.id].audiences.includes(aud.id);
             return `
-                                    <li class="${isSelected ? 'selected' : ''}" data-id="${aud.id}" data-type="audiences">
+                                    <li class="${isSelected ? 'selected' : ''}" data-item-id="${aud.id}" onclick="window.toggleSelection(this, '${cat.id}', 'audiences', '${aud.id}')">
                                         <div class="item-main">
                                             <div class="item-checkbox"></div>
                                             <span>${aud.name}</span>
@@ -162,11 +190,11 @@ async function init() {
                     </div>
                     <div class="info-group">
                         <h3>Criativos</h3>
-                        <ul class="info-list" id="creativesList">
+                        <ul class="info-list">
                             ${cat.creatives.map(cre => {
             const isSelected = clientData.selections[cat.id].creatives.includes(cre.id);
             return `
-                                    <li class="${isSelected ? 'selected' : ''}" data-id="${cre.id}" data-type="creatives">
+                                    <li class="${isSelected ? 'selected' : ''}" data-item-id="${cre.id}" onclick="window.toggleSelection(this, '${cat.id}', 'creatives', '${cre.id}')">
                                         <div class="item-main">
                                             <div class="item-checkbox"></div>
                                             <span>${cre.name}</span>
@@ -180,50 +208,21 @@ async function init() {
                 </div>
             </div>
         `;
-
-        // Event delegation to prevent flicker
-        const handleToggle = (e) => {
-            const li = e.target.closest('li');
-            if (li && !e.target.classList.contains('creative-link')) {
-                const id = li.dataset.id;
-                const type = li.dataset.type;
-                toggleSelectionOptimized(cat.id, type, id, li);
-            }
-        };
-
-        const audList = document.getElementById('audiencesList');
-        const creList = document.getElementById('creativesList');
-        audList.addEventListener('click', handleToggle);
-        creList.addEventListener('click', handleToggle);
-
-        document.getElementById('selectAllBtn').addEventListener('click', () => {
-            selectAllItems(cat.id, audList, creList);
-        });
     }
 
-    function toggleSelectionOptimized(catId, type, itemId, element) {
+    window.toggleSelection = (el, catId, type, itemId) => {
         const list = clientData.selections[catId][type];
         const idx = list.indexOf(itemId);
 
         if (idx > -1) {
             list.splice(idx, 1);
-            element.classList.remove('selected');
+            el.classList.remove('selected');
         } else {
             list.push(itemId);
-            element.classList.add('selected');
+            el.classList.add('selected');
         }
-    }
-
-    function selectAllItems(catId, audList, creList) {
-        const cat = database.categories.find(c => c.id === catId);
-
-        clientData.selections[catId].audiences = cat.audiences.map(a => a.id);
-        clientData.selections[catId].creatives = cat.creatives.map(c => c.id);
-
-        // Update DOM without full re-render
-        audList.querySelectorAll('li').forEach(li => li.classList.add('selected'));
-        creList.querySelectorAll('li').forEach(li => li.classList.add('selected'));
-    }
+        // No full renderStep() here to avoid flicker
+    };
 
     // Step 5: Dashboard Mind Map
     function renderDashboard() {
@@ -236,8 +235,8 @@ async function init() {
                 style: 'currency',
                 currency: 'BRL'
             });
-            const audiencesArr = cat.audiences.filter(a => clientData.selections[cat.id].audiences.includes(a.id));
-            const creativesArr = cat.creatives.filter(c => clientData.selections[cat.id].creatives.includes(c.id));
+            const audiences = cat.audiences.filter(a => clientData.selections[cat.id].audiences.includes(a.id));
+            const creatives = cat.creatives.filter(c => clientData.selections[cat.id].creatives.includes(c.id));
 
             return `
                             <div class="branch">
@@ -246,8 +245,8 @@ async function init() {
                                     <span class="branch-tag">${amount}</span>
                                 </div>
                                 <div class="branch-items">
-                                    <strong>Públicos:</strong> ${audiencesArr.map(a => a.name).join(', ') || 'Nenhum'}<br>
-                                    <strong>Criativos:</strong> ${creativesArr.map(c => c.name).join(', ') || 'Nenhum'}
+                                    <strong>Públicos:</strong> ${audiences.map(a => a.name).join(', ') || 'Nenhum'}<br>
+                                    <strong>Criativos:</strong> ${creatives.map(c => c.name).join(', ') || 'Nenhum'}
                                 </div>
                             </div>
                         `;
