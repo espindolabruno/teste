@@ -2,11 +2,13 @@
     --primary-color: #1b4332;
     --secondary-color: #2d6a4f;
     --accent-color: #d4a373;
-    --bg-color: #f8f9fa;
-    --text-color: #212529;
+    --bg-dashboard: #F5F6F8;
+    --bg-wizard: #f8f9fa;
+    --text-color: #2D3748;
+    --text-muted: #718096;
     --white: #ffffff;
-    --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.07);
-    --radius: 16px;
+    --card-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    --radius: 12px;
     --transition: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
@@ -18,14 +20,19 @@
 
 body {
     font-family: 'Inter', sans-serif;
-    background-color: var(--bg-color);
+    background-color: var(--bg-wizard);
     color: var(--text-color);
     line-height: 1.6;
     overflow-x: hidden;
+    transition: background-color 0.5s ease;
+}
+
+body.dashboard-mode {
+    background-color: var(--bg-dashboard);
 }
 
 .app-container {
-    max-width: 1000px;
+    max-width: 1100px;
     margin: 0 auto;
     padding: 1.5rem;
     min-height: 100vh;
@@ -33,7 +40,7 @@ body {
     flex-direction: column;
 }
 
-/* Wizard Header & Progress */
+/* Wizard Elements */
 header.wizard-header {
     display: flex;
     flex-direction: column;
@@ -116,50 +123,281 @@ header.wizard-header {
     color: var(--white);
 }
 
-.step-dot span {
-    position: absolute;
-    top: 100%;
-    margin-top: 8px;
-    white-space: nowrap;
-    font-size: 0.7rem;
+/* Dashboard UI Structure */
+.dashboard-view {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    animation: fadeIn 0.6s var(--transition);
 }
 
-/* Step Content Section */
-.step-section {
-    display: none;
-    opacity: 0;
-    transform: translateX(20px);
-    transition: all 0.4s var(--transition);
-}
-
-.step-section.active {
-    display: block;
-    opacity: 1;
-    transform: translateX(0);
-}
-
-.step-card {
+.dash-header {
     background: var(--white);
-    padding: 2.5rem;
+    padding: 1.5rem 2rem;
     border-radius: var(--radius);
     box-shadow: var(--card-shadow);
-    margin-bottom: 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
 }
 
-.step-title {
+.dash-meta h2 {
     font-family: 'Outfit', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     color: var(--primary-color);
+}
+
+.dash-meta p {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.dash-actions {
+    display: flex;
+    gap: 0.8rem;
+}
+
+.dash-btn {
+    padding: 0.6rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-outline {
+    border: 1px solid #E2E8F0;
+    background: transparent;
+    color: var(--text-color);
+}
+
+.btn-outline:hover {
+    background: #F7FAFC;
+}
+
+/* Budget Overview */
+.overview-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+}
+
+.overview-card {
+    background: var(--white);
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    position: relative;
+    overflow: hidden;
+}
+
+.overview-card h4 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
     margin-bottom: 0.5rem;
 }
 
-.step-desc {
-    color: #666;
-    margin-bottom: 2rem;
-    font-size: 0.95rem;
+.overview-card .value {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--primary-color);
 }
 
-/* Wizard Nav */
+.overview-card .percent {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--secondary-color);
+    float: right;
+}
+
+.mini-progress {
+    width: 100%;
+    height: 6px;
+    background: #EDF2F7;
+    border-radius: 10px;
+    margin-top: 1rem;
+    overflow: hidden;
+}
+
+.mini-progress-bar {
+    height: 100%;
+    background: var(--secondary-color);
+    border-radius: 10px;
+}
+
+/* Vertical Funnel */
+.funnel-container {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1.5rem;
+}
+
+.funnel-step {
+    width: 100%;
+    background: var(--primary-color);
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    font-weight: 700;
+    clip-path: polygon(0% 0%, 100% 0%, 90% 100%, 10% 100%);
+    margin-bottom: -15px;
+    transition: transform 0.3s;
+}
+
+.funnel-step:hover {
+    transform: scale(1.02);
+}
+
+.funnel-step:nth-child(2) {
+    width: 85%;
+    opacity: 0.9;
+}
+
+.funnel-step:nth-child(3) {
+    width: 70%;
+    opacity: 0.8;
+}
+
+.funnel-step:nth-child(4) {
+    width: 55%;
+    opacity: 0.7;
+}
+
+/* Accordion */
+.accordion-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.accordion-item {
+    background: var(--white);
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+}
+
+.accordion-header {
+    padding: 1.2rem 2rem;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--white);
+    font-weight: 700;
+    color: var(--primary-color);
+    transition: background 0.3s;
+}
+
+.accordion-header:hover {
+    background: #FAFAFA;
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.5s ease-out, padding 0.5s;
+    padding: 0 2rem;
+}
+
+.accordion-item.active .accordion-content {
+    max-height: 500px;
+    padding: 1.5rem 2rem;
+}
+
+.accordion-item.active .accordion-header {
+    border-bottom: 1px solid #EDF2F7;
+}
+
+/* Strategic Grid */
+.strategic-grid {
+    display: grid;
+    grid-template-columns: 2fr 1.2fr;
+    gap: 2rem;
+}
+
+/* Flow Diagram */
+.flow-map {
+    background: var(--white);
+    padding: 2rem;
+    border-radius: var(--radius);
+    box-shadow: var(--card-shadow);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: relative;
+}
+
+.flow-node {
+    background: #F7FAFC;
+    padding: 0.8rem 1.2rem;
+    border: 1px solid #E2E8F0;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    position: relative;
+    z-index: 2;
+}
+
+.flow-map::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 10%;
+    width: 80%;
+    height: 2px;
+    background: #E2E8F0;
+    z-index: 1;
+}
+
+/* Projections */
+.projection-card {
+    background: var(--primary-color);
+    color: white;
+    padding: 2rem;
+    border-radius: var(--radius);
+    box-shadow: 0 10px 30px rgba(27, 67, 50, 0.2);
+}
+
+.metrics-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.metric-box h6 {
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.6);
+    text-transform: uppercase;
+    margin-bottom: 0.3rem;
+}
+
+.metric-box .val {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+/* Auto Diagnosis */
+.diagnosis-card {
+    background: #FFFBEB;
+    border: 1px solid #FEF3C7;
+    padding: 1.5rem;
+    border-radius: var(--radius);
+    color: #92400E;
+    font-size: 0.9rem;
+    line-height: 1.5;
+}
+
+/* Wizard Buttons & Transitions */
 .wizard-nav {
     display: flex;
     justify-content: space-between;
@@ -176,7 +414,6 @@ header.wizard-header {
     font-weight: 700;
     cursor: pointer;
     transition: all 0.3s;
-    font-family: 'Inter', sans-serif;
 }
 
 .primary-btn:hover {
@@ -184,187 +421,6 @@ header.wizard-header {
     transform: translateY(-2px);
 }
 
-.primary-btn:disabled {
-    background: #ccc;
-    cursor: not-allowed;
-    transform: none;
-}
-
-.secondary-btn {
-    background: #f0f0f0;
-    color: #444;
-    border: none;
-    padding: 1rem 2.5rem;
-    border-radius: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.secondary-btn:disabled {
-    opacity: 0;
-    cursor: default;
-}
-
-/* Interactive Mind Map Dashboard */
-.mindmap-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 3rem;
-    padding: 2rem 0;
-    position: relative;
-    max-width: 1000px;
-    margin: 0 auto;
-}
-
-.mindmap-root {
-    background: var(--primary-color);
-    color: var(--white);
-    padding: 1.5rem 3rem;
-    border-radius: 50px;
-    font-weight: 800;
-    font-size: 1.2rem;
-    box-shadow: 0 10px 30px rgba(27, 67, 50, 0.3);
-    z-index: 10;
-}
-
-.mindmap-branches {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 3rem;
-    width: 100%;
-}
-
-.branch {
-    background: var(--white);
-    padding: 1.5rem;
-    border-radius: var(--radius);
-    box-shadow: var(--card-shadow);
-    position: relative;
-}
-
-.branch::before {
-    content: '';
-    position: absolute;
-    top: -1.5rem;
-    left: 50%;
-    width: 2px;
-    height: 1.5rem;
-    background: #e0e0e0;
-}
-
-.branch-title {
-    font-weight: 700;
-    color: var(--primary-color);
-    margin-bottom: 1rem;
-    display: flex;
-    justify-content: space-between;
-}
-
-.branch-items {
-    font-size: 0.85rem;
-    color: #555;
-}
-
-.branch-tag {
-    background: #f0f7f4;
-    color: var(--secondary-color);
-    padding: 0.2rem 0.6rem;
-    border-radius: 4px;
-    font-size: 0.75rem;
-}
-
-/* Item List from before revamped */
-.info-list {
-    list-style: none;
-}
-
-.info-list li {
-    padding: 1rem;
-    border: 2px solid #f0f0f0;
-    border-radius: 12px;
-    margin-bottom: 0.8rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: all 0.3s;
-    cursor: pointer;
-}
-
-.info-list li:hover {
-    border-color: var(--secondary-color);
-}
-
-.info-list li.selected {
-    border-color: var(--secondary-color);
-    background: #f0f7f4;
-    border-width: 2px;
-}
-
-.item-checkbox {
-    width: 22px;
-    height: 22px;
-    border: 2px solid #ddd;
-    border-radius: 6px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.selected .item-checkbox {
-    background: var(--secondary-color);
-    border-color: var(--secondary-color);
-    color: white;
-}
-
-.selected .item-checkbox::after {
-    content: '✓';
-}
-
-/* Saved Clients Drawer */
-.saved-clients-dropdown {
-    margin-top: 3rem;
-    text-align: center;
-}
-
-.toggle-clients-btn {
-    background: none;
-    border: 1px solid #ccc;
-    color: #888;
-    padding: 0.5rem 1.5rem;
-    border-radius: 20px;
-    font-size: 0.8rem;
-    cursor: pointer;
-}
-
-.clients-list-drawer {
-    background: white;
-    border-radius: var(--radius);
-    padding: 1.5rem;
-    margin-top: 1rem;
-    box-shadow: var(--card-shadow);
-    display: flex;
-    gap: 1rem;
-    overflow-x: auto;
-}
-
-.clients-list-drawer.hidden {
-    display: none;
-}
-
-.client-chip {
-    background: #f8f9fa;
-    padding: 0.8rem 1.5rem;
-    border-radius: 50px;
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    cursor: pointer;
-    white-space: nowrap;
-}
-
-/* Fix for Step 0 and Input Styles */
 .input-group {
     display: flex;
     flex-direction: column;
@@ -384,52 +440,26 @@ header.wizard-header {
     border: 2px solid #eee;
     border-radius: 12px;
     font-size: 1.1rem;
-    font-family: inherit;
-    outline: none;
-    transition: all 0.3s var(--transition);
 }
 
-.input-group input:focus {
-    border-color: var(--secondary-color);
-    box-shadow: 0 0 0 4px rgba(45, 106, 79, 0.1);
-}
-
-.recommended-btn {
-    background: var(--white);
-    color: var(--secondary-color);
-    border: 2px solid var(--secondary-color);
-    padding: 1rem 1.5rem;
-    border-radius: 12px;
-    font-weight: 700;
-    cursor: pointer;
-    margin-top: 1.5rem;
-    width: 100%;
-    transition: all 0.3s;
-    font-family: 'Inter', sans-serif;
-}
-
-.recommended-btn:hover {
-    background: var(--secondary-color);
-    color: var(--white);
-    transform: translateY(-2px);
-}
-
-.creative-link {
-    background: var(--accent-color);
-    color: var(--white) !important;
-    padding: 0.4rem 0.8rem;
-    border-radius: 4px;
-    font-size: 0.75rem;
-    font-weight: 700;
-    text-decoration: none;
-}
-
-@media (max-width: 768px) {
-    .mindmap-branches {
-        grid-template-columns: 1fr;
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
     }
 
-    .progress-container {
-        padding: 20px 10px;
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 900px) {
+    .overview-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .strategic-grid {
+        grid-template-columns: 1fr;
     }
 }
