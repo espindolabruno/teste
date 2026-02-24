@@ -15,52 +15,49 @@
 
 <body>
     <div class="app-container">
-        <header>
+        <header class="wizard-header">
             <div class="logo-area">
                 <h1>Método <span>Connect</span></h1>
-                <p>Calculadora de Verba & Estratégia Agro</p>
+                <p>Guia de Estratégia Agro</p>
             </div>
-            <div class="budget-input-area">
-                <div class="input-group">
-                    <label for="clientName">Nome do Cliente</label>
-                    <input type="text" id="clientName" placeholder="Ex: Fazenda Boa Vista">
+            <div class="progress-container" id="progressBarContainer">
+                <div class="progress-bar" id="progressBar"></div>
+                <div class="steps-indicators">
+                    <div class="step-dot active" data-step="0"><span>Verba</span></div>
+                    <div class="step-dot" data-step="1"><span>Recon.</span></div>
+                    <div class="step-dot" data-step="2"><span>Oferta</span></div>
+                    <div class="step-dot" data-step="3"><span>Remkt</span></div>
+                    <div class="step-dot" data-step="4"><span>Prova</span></div>
+                    <div class="step-dot" data-step="5"><span>Mapa</span></div>
                 </div>
-                <div class="input-group">
-                    <label for="totalBudget">Orçamento Mensal (R$)</label>
-                    <input type="number" id="totalBudget" placeholder="Ex: 5000" min="0">
-                </div>
-                <button id="saveBtn" class="primary-btn">Salvar Simulação</button>
             </div>
         </header>
 
-        <section class="saved-clients-section">
-            <h3>Simulações Salvas</h3>
-            <div id="savedClientsList" class="clients-list">
-                <!-- Saved clients will appear here -->
-            </div>
-        </section>
-
-        <main id="appContent">
-            <section class="results-grid" id="resultsGrid">
-                <!-- Calculation cards will be injected here -->
-            </section>
-
-            <section class="details-section">
-                <h2>Detalhamento da Estratégia</h2>
-                <div class="tabs">
-                    <button class="tab-btn active" data-tab="audiences">Públicos Sugeridos</button>
-                    <button class="tab-btn" data-tab="creatives">Base de Criativos</button>
-                </div>
-                <div class="tab-content" id="tabContent">
-                    <!-- Tab content will be injected here -->
-                </div>
+        <main id="wizardContent">
+            <!-- Step sections will be injected here by app.js -->
+            <section id="currentStep" class="step-section active">
+                <!-- Content for the active step -->
             </section>
         </main>
+
+        <nav class="wizard-nav" id="wizardNav">
+            <button id="prevBtn" class="secondary-btn" disabled>Anterior</button>
+            <button id="nextBtn" class="primary-btn">Próximo</button>
+        </nav>
+
+        <section class="saved-clients-dropdown" id="savedClientsContainer">
+            <button class="toggle-clients-btn" id="toggleClients">Simulações Antigas</button>
+            <div id="savedClientsList" class="clients-list-drawer hidden">
+                <!-- Saved clients list -->
+            </div>
+        </section>
 
         <footer>
             <p>&copy; 2024 Agência Agro | Gerenciador de Tráfego</p>
         </footer>
     </div>
+
+    <!-- Template for steps will be handled in JS -->
     <script src="app.js" type="module"></script>
 </body>
 
