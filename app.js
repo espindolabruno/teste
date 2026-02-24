@@ -10,6 +10,8 @@ async function init() {
     let database = null;
     let currentTab = 'audiences';
     let savedClients = JSON.parse(localStorage.getItem('agro_campaigns') || '[]');
+    let selectedAudiences = new Set();
+    let selectedCreatives = new Set();
 
     try {
         const response = await fetch('database.json');
@@ -35,10 +37,19 @@ async function init() {
             return;
         }
 
-        savedClients.push({ name, budget, id: Date.now() });
+        savedClients.push({
+            name,
+            budget,
+            id: Date.now(),
+            audiences: Array.from(selectedAudiences),
+            creatives: Array.from(selectedCreatives)
+        });
         localStorage.setItem('agro_campaigns', JSON.stringify(savedClients));
         renderSavedClients();
         clientNameInput.value = '';
+        selectedAudiences.clear();
+        selectedCreatives.clear();
+        renderDetails();
     });
 
     tabBtns.forEach(btn => {
@@ -78,7 +89,23 @@ async function init() {
                     <div class="info-group">
                         <h3>${cat.name}</h3>
                         <ul class="info-list">
-                            ${cat[currentTab].map(item => `<li>${item}</li>`).join('')}
+                            ${cat[currentTab].map(item => {
+            const isSelected = currentTab === 'audiences'
+                ? selectedAudiences.has(item.id)
+                : selectedCreatives.has(item.id);
+
+            return `
+                                    <li class="${isSelected ? 'selected' : ''}" onclick="toggleItem('${item.id}', '${currentTab}')">
+                                        <div class="item-main">
+                                            <div class="item-checkbox"></div>
+                                            <span>${item.name}</span>
+                                        </div>
+                                        ${item.url ? `
+                                            <a href="${item.url}" target="_blank" class="creative-link" onclick="event.stopPropagation()">Ver Vídeo</a>
+                                        ` : ''}
+                                    </li>
+                                `;
+        }).join('')}
                         </ul>
                     </div>
                 `).join('')}
@@ -86,9 +113,19 @@ async function init() {
         `;
     }
 
+    window.toggleItem = (id, type) => {
+        const set = type === 'audiences' ? selectedAudiences : selectedCreatives;
+        if (set.has(id)) {
+            set.delete(id);
+        } else {
+            set.add(id);
+        }
+        renderDetails();
+    };
+
     function renderSavedClients() {
         savedClientsList.innerHTML = savedClients.map(client => `
-            <div class="client-chip" onclick="loadClient(${client.budget}, '${client.name}')">
+            <div class="client-chip" onclick="loadClient(${client.id})">
                 <span class="client-name">${client.name}</span>
                 <span class="client-budget">R$ ${client.budget}</span>
                 <span class="delete-client" onclick="event.stopPropagation(); deleteClient(${client.id})">&times;</span>
@@ -96,10 +133,17 @@ async function init() {
         `).join('');
     }
 
-    window.loadClient = (budget, name) => {
-        budgetInput.value = budget;
-        clientNameInput.value = name;
-        renderResults(budget);
+    window.loadClient = (clientId) => {
+        const client = savedClients.find(c => c.id === clientId);
+        if (!client) return;
+
+        budgetInput.value = client.budget;
+        clientNameInput.value = client.name;
+        selectedAudiences = new Set(client.audiences || []);
+        selectedCreatives = new Set(client.creatives || []);
+
+        renderResults(client.budget);
+        renderDetails();
     };
 
     window.deleteClient = (id) => {

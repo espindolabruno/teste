@@ -5,13 +5,31 @@
       "name": "Reconhecimento da Marca (Frio)",
       "percentage": 15,
       "audiences": [
-        "Interesses no agro",
-        "Interesses em produtos específicos"
+        {
+          "id": "rec_aud_1",
+          "name": "Interesses no agro"
+        },
+        {
+          "id": "rec_aud_2",
+          "name": "Interesses em produtos específicos"
+        }
       ],
       "creatives": [
-        "Vídeo Institucional",
-        "Dicas de manejo",
-        "Bastidores da produção"
+        {
+          "id": "rec_cre_1",
+          "name": "Vídeo Institucional",
+          "url": "https://youtube.com/link-exemplo-1"
+        },
+        {
+          "id": "rec_cre_2",
+          "name": "Dicas de manejo",
+          "url": "https://youtube.com/link-exemplo-2"
+        },
+        {
+          "id": "rec_cre_3",
+          "name": "Bastidores da produção",
+          "url": "https://youtube.com/link-exemplo-3"
+        }
       ]
     },
     {
@@ -19,13 +37,31 @@
       "name": "Oferta de Produto (Frio)",
       "percentage": 40,
       "audiences": [
-        "Pesquisando",
-        "Interesses em compra"
+        {
+          "id": "ofe_aud_1",
+          "name": "Pesquisando"
+        },
+        {
+          "id": "ofe_aud_2",
+          "name": "Interesses em compra"
+        }
       ],
       "creatives": [
-        "Catálogo de produtos",
-        "Promoção do mês",
-        "Benefícios diretos"
+        {
+          "id": "ofe_cre_1",
+          "name": "Catálogo de produtos",
+          "url": "https://vimeo.com/link-exemplo-1"
+        },
+        {
+          "id": "ofe_cre_2",
+          "name": "Promoção do mês",
+          "url": "https://vimeo.com/link-exemplo-2"
+        },
+        {
+          "id": "ofe_cre_3",
+          "name": "Benefícios diretos",
+          "url": "https://vimeo.com/link-exemplo-3"
+        }
       ]
     },
     {
@@ -33,15 +69,39 @@
       "name": "Remarketing",
       "percentage": 35,
       "audiences": [
-        "Acessaram o site",
-        "Assistiram 15s de vídeo",
-        "Engajaram redes sociais",
-        "Clicaram em anúncio"
+        {
+          "id": "rem_aud_1",
+          "name": "Acessaram o site"
+        },
+        {
+          "id": "rem_aud_2",
+          "name": "Assistiram 15s de vídeo"
+        },
+        {
+          "id": "rem_aud_3",
+          "name": "Engajaram redes sociais"
+        },
+        {
+          "id": "rem_aud_4",
+          "name": "Clicaram em anúncio"
+        }
       ],
       "creatives": [
-        "Depoimento de cliente",
-        "Quebra de objeção",
-        "Lembrete de oferta"
+        {
+          "id": "rem_cre_1",
+          "name": "Depoimento de cliente",
+          "url": "https://drive.google.com/link-exemplo-1"
+        },
+        {
+          "id": "rem_cre_2",
+          "name": "Quebra de objeção",
+          "url": "https://drive.google.com/link-exemplo-2"
+        },
+        {
+          "id": "rem_cre_3",
+          "name": "Lembrete de oferta",
+          "url": "https://drive.google.com/link-exemplo-3"
+        }
       ]
     },
     {
@@ -49,14 +109,36 @@
       "name": "Prova Social",
       "percentage": 10,
       "audiences": [
-        "Públicos quentes",
-        "Engajados"
+        {
+          "id": "pro_aud_1",
+          "name": "Públicos quentes"
+        },
+        {
+          "id": "pro_aud_2",
+          "name": "Engajados"
+        }
       ],
       "creatives": [
-        "Dia a dia da empresa",
-        "Entregas realizadas",
-        "Equipe técnica",
-        "Produção em campo"
+        {
+          "id": "pro_cre_1",
+          "name": "Dia a dia da empresa",
+          "url": "https://instagram.com/link-exemplo-1"
+        },
+        {
+          "id": "pro_cre_2",
+          "name": "Entregas realizadas",
+          "url": "https://instagram.com/link-exemplo-2"
+        },
+        {
+          "id": "pro_cre_3",
+          "name": "Equipe técnica",
+          "url": "https://instagram.com/link-exemplo-3"
+        },
+        {
+          "id": "pro_cre_4",
+          "name": "Produção em campo",
+          "url": "https://instagram.com/link-exemplo-4"
+        }
       ]
     }
   ]
