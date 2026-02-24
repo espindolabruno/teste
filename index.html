@@ -4,60 +4,58 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Calculadora de Campanha Agro | Método Connect</title>
+    <title>Método Connect | Dashboard Estratégico</title>
     <link rel="stylesheet" href="style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Outfit:wght@400;600;800&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=Outfit:wght@400;600;800&display=swap"
         rel="stylesheet">
 </head>
 
 <body>
-    <div class="app-container">
-        <header class="wizard-header">
-            <div class="logo-area">
-                <h1>Método <span>Connect</span></h1>
-                <p>Guia de Estratégia Agro</p>
-            </div>
-            <div class="progress-container" id="progressBarContainer">
-                <div class="progress-bar" id="progressBar"></div>
-                <div class="steps-indicators">
-                    <div class="step-dot active" data-step="0"><span>Verba</span></div>
-                    <div class="step-dot" data-step="1"><span>Recon.</span></div>
-                    <div class="step-dot" data-step="2"><span>Oferta</span></div>
-                    <div class="step-dot" data-step="3"><span>Remkt</span></div>
-                    <div class="step-dot" data-step="4"><span>Prova</span></div>
-                    <div class="step-dot" data-step="5"><span>Mapa</span></div>
+    <div id="app" class="app-wrapper">
+        <div class="app-container">
+            <header class="wizard-header" id="wizardHeader">
+                <div class="logo-area">
+                    <h1>Método <span>Connect</span></h1>
+                    <p>Guia de Estratégia Agro</p>
                 </div>
-            </div>
-        </header>
+                <div class="progress-container" id="progressBarContainer">
+                    <div class="progress-bar" id="progressBar"></div>
+                    <div class="steps-indicators">
+                        <div class="step-dot active"></div>
+                        <div class="step-dot"></div>
+                        <div class="step-dot"></div>
+                        <div class="step-dot"></div>
+                        <div class="step-dot"></div>
+                        <div class="step-dot"></div>
+                    </div>
+                </div>
+            </header>
 
-        <main id="wizardContent">
-            <!-- Step sections will be injected here by app.js -->
-            <section id="currentStep" class="step-section active">
-                <!-- Content for the active step -->
+            <main id="wizardContent">
+                <section id="currentStep" class="step-section active">
+                    <!-- Steps injected here -->
+                </section>
+            </main>
+
+            <nav class="wizard-nav" id="wizardNav">
+                <button id="prevBtn" class="secondary-btn" disabled>Anterior</button>
+                <button id="nextBtn" class="primary-btn">Próximo</button>
+            </nav>
+
+            <section class="saved-clients-dropdown" id="savedClientsContainer">
+                <button class="toggle-clients-btn" id="toggleClients">Simulações Antigas</button>
+                <div id="savedClientsList" class="clients-list-drawer hidden"></div>
             </section>
-        </main>
 
-        <nav class="wizard-nav" id="wizardNav">
-            <button id="prevBtn" class="secondary-btn" disabled>Anterior</button>
-            <button id="nextBtn" class="primary-btn">Próximo</button>
-        </nav>
-
-        <section class="saved-clients-dropdown" id="savedClientsContainer">
-            <button class="toggle-clients-btn" id="toggleClients">Simulações Antigas</button>
-            <div id="savedClientsList" class="clients-list-drawer hidden">
-                <!-- Saved clients list -->
-            </div>
-        </section>
-
-        <footer>
-            <p>&copy; 2024 Agência Agro | Gerenciador de Tráfego</p>
-        </footer>
+            <footer>
+                <p>&copy; 2024 Agência Agro | Gerenciador de Tráfego</p>
+            </footer>
+        </div>
     </div>
 
-    <!-- Template for steps will be handled in JS -->
     <script src="app.js" type="module"></script>
 </body>
 

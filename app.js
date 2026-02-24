@@ -4,10 +4,10 @@ async function init() {
     const prevBtn = document.getElementById('prevBtn');
     const nextBtn = document.getElementById('nextBtn');
     const progressBar = document.getElementById('progressBar');
+    const progressBarContainer = document.getElementById('progressBarContainer');
     const dots = document.querySelectorAll('.step-dot');
     const toggleClientsBtn = document.getElementById('toggleClients');
     const savedClientsList = document.getElementById('savedClientsList');
-    const wizardHeader = document.querySelector('.wizard-header');
     const wizardNav = document.getElementById('wizardNav');
 
     // App State
@@ -37,8 +37,8 @@ async function init() {
 
     // Global Enter Key Listener
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' && currentStepIndex < 5) {
-            nextBtn.click();
+        if (e.key === 'Enter') {
+            if (currentStepIndex < 5) nextBtn.click();
         }
     });
 
@@ -68,23 +68,26 @@ async function init() {
     // Step Rendering Logic
     function renderStep() {
         updateProgress();
-        document.body.classList.toggle('dashboard-mode', currentStepIndex === 5);
-        if (currentStepIndex === 5) {
-            wizardHeader.style.display = 'none';
-            wizardNav.style.display = 'none';
-        } else {
-            wizardHeader.style.display = 'flex';
-            wizardNav.style.display = 'flex';
-        }
-
         currentStepContainer.classList.remove('active');
 
         setTimeout(() => {
             currentStepContainer.innerHTML = '';
 
-            if (currentStepIndex === 0) renderStep0();
-            else if (currentStepIndex >= 1 && currentStepIndex <= 4) renderCampaignStep();
-            else if (currentStepIndex === 5) renderDashboard();
+            if (currentStepIndex === 0) {
+                document.body.classList.remove('dashboard-mode');
+                renderStep0();
+                progressBarContainer.classList.remove('hidden');
+                wizardNav.classList.remove('hidden');
+            } else if (currentStepIndex >= 1 && currentStepIndex <= 4) {
+                renderCampaignStep();
+                progressBarContainer.classList.remove('hidden');
+                wizardNav.classList.remove('hidden');
+            } else if (currentStepIndex === 5) {
+                document.body.classList.add('dashboard-mode');
+                renderDashboard();
+                progressBarContainer.classList.add('hidden');
+                wizardNav.classList.add('hidden');
+            }
 
             currentStepContainer.classList.add('active');
             updateNavButtons();
@@ -94,7 +97,6 @@ async function init() {
     function updateProgress() {
         const progress = (currentStepIndex / 5) * 100;
         progressBar.style.setProperty('--progress', `${progress}%`);
-
         dots.forEach((dot, idx) => {
             dot.classList.toggle('active', idx === currentStepIndex);
             dot.classList.toggle('completed', idx < currentStepIndex);
@@ -112,13 +114,13 @@ async function init() {
             <div class="step-card">
                 <h2 class="step-title">Vamos começar?</h2>
                 <p class="step-desc">Insira o nome do cliente e a verba mensal para distribuir.</p>
-                <div class="input-group" style="margin-bottom: 1.5rem;">
+                <div class="input-group">
                     <label>Nome do Cliente</label>
                     <input type="text" id="inputClientName" value="${clientData.name}" placeholder="Ex: Sítio Bruno">
                 </div>
                 <div class="input-group">
                     <label>Orçamento Mensal (R$)</label>
-                    <input type="number" id="inputBudget" value="${clientData.budget || ''}" placeholder="Ex: 5000">
+                    <input type="number" id="inputBudget" value="${clientData.budget || ''}" placeholder="Ex: 12000">
                 </div>
                 <button class="recommended-btn" onclick="window.recommendStrategy()">✨ Gerar Estratégia Recomendada</button>
             </div>
@@ -126,7 +128,6 @@ async function init() {
 
         const nameInp = document.getElementById('inputClientName');
         const budgetInp = document.getElementById('inputBudget');
-
         nameInp.addEventListener('input', (e) => clientData.name = e.target.value);
         budgetInp.addEventListener('input', (e) => clientData.budget = parseFloat(e.target.value) || 0);
     }
@@ -134,20 +135,16 @@ async function init() {
     window.recommendStrategy = () => {
         const nameInp = document.getElementById('inputClientName');
         const budgetInp = document.getElementById('inputBudget');
-
         if (!nameInp.value || !budgetInp.value || parseFloat(budgetInp.value) <= 0) {
             alert('Por favor, preencha o nome e um orçamento válido.');
             return;
         }
-
         clientData.name = nameInp.value;
         clientData.budget = parseFloat(budgetInp.value);
-
         database.categories.forEach(cat => {
             clientData.selections[cat.id].audiences = cat.audiences.map(a => a.id);
             clientData.selections[cat.id].creatives = cat.creatives.map(c => c.id);
         });
-
         currentStepIndex = 5;
         renderStep();
     };
@@ -161,41 +158,44 @@ async function init() {
     }
 
     function renderCampaignStep() {
-        const categoryIndex = currentStepIndex - 1;
-        const cat = database.categories[categoryIndex];
-        const amount = (clientData.budget * (cat.percentage / 100)).toLocaleString('pt-BR', {
-            style: 'currency',
-            currency: 'BRL'
-        });
+        const cat = database.categories[currentStepIndex - 1];
+        const amount = (clientData.budget * (cat.percentage / 100)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
         currentStepContainer.innerHTML = `
             <div class="step-card">
-                <div style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
                     <h2 class="step-title">${cat.name}</h2>
-                    <span class="branch-tag" style="font-size:1rem; padding: 0.5rem 1rem;">Verba: ${amount}</span>
+                    <span class="acc-badge" style="font-size:1rem; padding: 0.5rem 1rem;">Verba: ${amount}</span>
                 </div>
-                <p class="step-desc">${cat.percentage}% do orçamento. Selecione os públicos e criativos ideais.</p>
-                <div class="content-grid">
-                    <div class="info-group">
-                        <h3>Públicos</h3>
+                <p class="step-desc">Selecione os públicos e criativos ideais para esta etapa.</p>
+                
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                    <div>
+                        <h4 style="margin-bottom:1rem; color:#8898AA; font-size:0.75rem; text-transform:uppercase;">Públicos</h4>
                         <ul class="info-list">
                             ${cat.audiences.map(aud => {
             const isSelected = clientData.selections[cat.id].audiences.includes(aud.id);
-            return `<li class="${isSelected ? 'selected' : ''}" onclick="window.toggleSelection(this, '${cat.id}', 'audiences', '${aud.id}')">
-                                    <div class="item-main"><div class="item-checkbox"></div><span>${aud.name}</span></div>
-                                </li>`;
+            return `
+                                    <li class="${isSelected ? 'selected' : ''}" onclick="window.toggleSelection(this, '${cat.id}', 'audiences', '${aud.id}')">
+                                        <div class="item-checkbox"></div>
+                                        <span>${aud.name}</span>
+                                    </li>
+                                `;
         }).join('')}
                         </ul>
                     </div>
-                    <div class="info-group">
-                        <h3>Criativos</h3>
+                    <div>
+                        <h4 style="margin-bottom:1rem; color:#8898AA; font-size:0.75rem; text-transform:uppercase;">Criativos</h4>
                         <ul class="info-list">
                             ${cat.creatives.map(cre => {
             const isSelected = clientData.selections[cat.id].creatives.includes(cre.id);
-            return `<li class="${isSelected ? 'selected' : ''}" onclick="window.toggleSelection(this, '${cat.id}', 'creatives', '${cre.id}')">
-                                    <div class="item-main"><div class="item-checkbox"></div><span>${cre.name}</span></div>
-                                    <a href="${cre.url}" target="_blank" class="creative-link" onclick="event.stopPropagation()">Vídeo</a>
-                                </li>`;
+            return `
+                                    <li class="${isSelected ? 'selected' : ''}" onclick="window.toggleSelection(this, '${cat.id}', 'creatives', '${cre.id}')">
+                                        <div class="item-checkbox"></div>
+                                        <span>${cre.name}</span>
+                                        <a href="${cre.url}" target="_blank" class="creative-link" onclick="event.stopPropagation()">Ver</a>
+                                    </li>
+                                `;
         }).join('')}
                         </ul>
                     </div>
@@ -211,126 +211,209 @@ async function init() {
         else { list.push(itemId); el.classList.add('selected'); }
     };
 
-    // DASHBOARD RENDERING
+    // --- Dashboard View ---
     function renderDashboard() {
-        const budget = clientData.budget;
+        const totalBudgetStr = clientData.budget.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
         currentStepContainer.innerHTML = `
             <div class="dashboard-view">
-                <header class="dash-header">
-                    <div class="dash-meta">
-                        <h2>Método Connect – Guia Estratégico</h2>
-                        <p>Cliente: <strong>${clientData.name}</strong> | Objetivo: Geração de Leads | Período: 30 dias</p>
+                <header class="dashboard-header">
+                    <div class="header-metadata">
+                        <div class="meta-item">
+                            <span class="meta-label">Método</span>
+                            <span class="meta-value">Connect</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Cliente</span>
+                            <span class="meta-value">${clientData.name}</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Objetivo</span>
+                            <span class="meta-value">Geração de Leads</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Período</span>
+                            <span class="meta-value">30 Dias</span>
+                        </div>
+                        <div class="meta-item">
+                            <span class="meta-label">Verba Total</span>
+                            <span class="meta-value">${totalBudgetStr}</span>
+                        </div>
                     </div>
-                    <div class="dash-actions">
-                        <button class="dash-btn btn-outline" onclick="window.print()">Exportar PDF</button>
-                        <button class="dash-btn btn-outline" onclick="alert('Modo Apresentação Ativado')">Modo Apresentação</button>
-                        <button class="dash-btn primary-btn" onclick="window.editStrategy()">Editar Estratégia</button>
+                    <div class="header-actions">
+                        <button class="action-btn" onclick="window.print()">Exportar PDF</button>
+                        <button class="action-btn" onclick="window.goEdit()">Editar Estratégia</button>
+                        <button class="action-btn primary" onclick="window.saveStrategy()">Salvar Estratégia</button>
                     </div>
                 </header>
 
-                <div class="overview-grid">
-                    ${database.categories.map(cat => {
-            const val = budget * (cat.percentage / 100);
-            return `
-                            <div class="overview-card">
-                                <h4>${cat.name}</h4>
-                                <span class="percent">${cat.percentage}%</span>
-                                <div class="value">R$ ${val.toLocaleString('pt-BR')}</div>
-                                <div class="mini-progress"><div class="mini-progress-bar" style="width: ${cat.percentage}%"></div></div>
-                            </div>
-                        `;
-        }).join('')}
-                </div>
-
-                <div class="strategic-grid">
-                    <div class="accordion-group">
-                        ${database.categories.map((cat, idx) => {
-            const selectedAuds = cat.audiences.filter(a => clientData.selections[cat.id].audiences.includes(a.id));
-            const selectedCres = cat.creatives.filter(c => clientData.selections[cat.id].creatives.includes(c.id));
-            const meta = getMetaForCategory(cat.id, budget * (cat.percentage / 100));
-
-            return `
-                                <div class="accordion-item ${idx === 0 ? 'active' : ''}">
-                                    <div class="accordion-header" onclick="window.toggleAccordion(this)">
-                                        <span>${cat.name}</span>
-                                        <span style="font-size:0.8rem; font-weight:400;">R$ ${(budget * (cat.percentage / 100)).toLocaleString('pt-BR')}</span>
-                                    </div>
-                                    <div class="accordion-content">
-                                        <p><strong>Objetivo:</strong> ${getObjective(cat.id)}</p>
-                                        <p><strong>Públicos:</strong> ${selectedAuds.map(a => a.name).join(', ') || 'Nenhum'}</p>
-                                        <p><strong>Criativos:</strong> ${selectedCres.map(c => c.name).join(', ') || 'Nenhum'}</p>
-                                        <p><strong>Meta Estimada:</strong> ${meta}</p>
-                                    </div>
+                <main class="dashboard-grid">
+                    <section>
+                        <h3 class="dist-section-title">Distribuição de Verba</h3>
+                        <div class="dist-list">
+                            ${database.categories.map(cat => renderDistCard(cat)).join('')}
+                            <div class="dist-card" style="background: #F8F9FA; border-left: 4px solid var(--primary-color);">
+                                <span class="dist-name" style="font-weight:800;">TOTAL</span>
+                                <div class="dist-bar-cont">
+                                    <div class="dist-bar-fill" style="width: 100%; background: var(--primary-color);"></div>
                                 </div>
-                            `;
-        }).join('')}
-                    </div>
-
-                    <div class="funnel-container">
-                        <h4 style="color:var(--text-muted); font-size: 0.8rem;">ESTRUTURA DO FUNIL</h4>
-                        <div class="funnel-step">RECONHECIMENTO</div>
-                        <div class="funnel-step">OFERTA</div>
-                        <div class="funnel-step">REMARKETING</div>
-                        <div class="funnel-step">PROVA SOCIAL</div>
-                    </div>
-                </div>
-
-                <div class="flow-map">
-                    <div class="flow-node">Interesses</div>
-                    <div class="flow-node">Engajamento</div>
-                    <div class="flow-node">Visita ao Site</div>
-                    <div class="flow-node">Conversão</div>
-                    <div class="flow-node">Remarketing</div>
-                </div>
-
-                <div class="strategic-grid">
-                    <div class="projection-card">
-                        <h4>PROJEÇÃO GERAL DA CAMPANHA</h4>
-                        <div class="metrics-list">
-                            <div class="metric-box"><h6>Impressões</h6><div class="val">${Math.floor(budget * 12).toLocaleString()}</div></div>
-                            <div class="metric-box"><h6>Cliques</h6><div class="val">${Math.floor(budget * 0.3).toLocaleString()}</div></div>
-                            <div class="metric-box"><h6>Leads</h6><div class="val">${Math.floor(budget / 100)}</div></div>
-                            <div class="metric-box"><h6>CPL Proj.</h6><div class="val">R$ 80 - 100</div></div>
+                                <div class="dist-val-group">
+                                    <span class="dist-val">${totalBudgetStr}</span>
+                                    <span class="dist-perc">100%</span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="diagnosis-card">
-                        <strong>Diagnóstico Estratégico</strong><br><br>
-                        “Estratégia com foco equilibrado entre aquisição e conversão. Forte investimento em meio e fundo de funil indica priorização de geração direta de demanda.”
-                    </div>
-                </div>
+                    </section>
 
-                <button class="primary-btn" style="margin-top: 2rem; width:100%;" onclick="window.finalizeAndSave()">Salvar Estratégia Final</button>
+                    <aside class="funnel-container">
+                        <h3 class="dist-section-title">Funil de Vendas</h3>
+                        <div class="funnel-card">
+                            <div class="funnel-visual">
+                                <div class="funnel-step" style="--step-index: 0">RECONHECIMENTO</div>
+                                <div class="funnel-step" style="--step-index: 1">OFERTA</div>
+                                <div class="funnel-step" style="--step-index: 2">REMARKETING</div>
+                                <div class="funnel-step" style="--step-index: 3">PROVA SOCIAL</div>
+                            </div>
+                        </div>
+                    </aside>
+
+                    <section class="accordion-cont">
+                        <h3 class="dist-section-title">Detalhamento por Etapa</h3>
+                        <div class="accordion-list">
+                            ${database.categories.map((cat, i) => renderAccordion(cat, i)).join('')}
+                        </div>
+                    </section>
+
+                    <section class="flow-section">
+                        <h3 class="dist-section-title">Mapa de Fluxo de Público</h3>
+                        <div class="flow-card">
+                            <div class="flow-node">
+                                <div class="flow-icon">🎯</div>
+                                <span class="flow-label">Interesses</span>
+                            </div>
+                            <span class="flow-arrow">→</span>
+                            <div class="flow-node">
+                                <div class="flow-icon">📱</div>
+                                <span class="flow-label">Engajamento</span>
+                            </div>
+                            <span class="flow-arrow">→</span>
+                            <div class="flow-node">
+                                <div class="flow-icon">🌐</div>
+                                <span class="flow-label">Site</span>
+                            </div>
+                            <span class="flow-arrow">→</span>
+                            <div class="flow-node">
+                                <div class="flow-icon">🔄</div>
+                                <span class="flow-label">Remarketing</span>
+                            </div>
+                            <span class="flow-arrow">→</span>
+                            <div class="flow-node">
+                                <div class="flow-icon">💰</div>
+                                <span class="flow-label">Conversão</span>
+                            </div>
+                        </div>
+                    </section>
+
+                    <section class="bottom-grid">
+                        <div class="proj-card">
+                            <h3 class="dist-section-title" style="margin-bottom:2rem;">Projeção Geral da Campanha</h3>
+                            <div class="proj-grid">
+                                <div class="proj-item">
+                                    <span class="meta-label">Impressões</span>
+                                    <span class="meta-value">${Math.floor(clientData.budget * 12).toLocaleString()}</span>
+                                </div>
+                                <div class="proj-item">
+                                    <span class="meta-label">Cliques</span>
+                                    <span class="meta-value">${Math.floor(clientData.budget * 0.4).toLocaleString()}</span>
+                                </div>
+                                <div class="proj-item">
+                                    <span class="meta-label">Leads</span>
+                                    <span class="meta-value">${Math.floor(clientData.budget * 0.015).toLocaleString()}</span>
+                                </div>
+                                <div class="proj-item">
+                                    <span class="meta-label">CPL Projetado</span>
+                                    <span class="meta-value">R$ 80 - 100</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="diag-card">
+                            <h3 class="dist-section-title">Diagnóstico</h3>
+                            <div class="diag-text">
+                                Estratégia com foco equilibrado entre aquisição e conversão. Forte investimento em meio e fundo de funil indica priorização de geração direta de demanda.
+                            </div>
+                        </div>
+                    </section>
+                </main>
             </div>
         `;
     }
 
-    // Helper functions for content
-    function getObjective(catId) {
-        const obs = { reconhecimento: 'Alcance e Engajamento', oferta: 'Conversão', remarketing: 'Conversão', prova_social: 'Autoridade e Reforço' };
-        return obs[catId] || '';
+    function renderDistCard(cat) {
+        const val = (clientData.budget * (cat.percentage / 100)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        return `
+            <div class="dist-card">
+                <span class="dist-name">${cat.name}</span>
+                <div class="dist-bar-cont">
+                    <div class="dist-bar-fill" style="width: ${cat.percentage}%"></div>
+                </div>
+                <div class="dist-val-group">
+                    <span class="dist-val">${val}</span>
+                    <span class="dist-perc">${cat.percentage}%</span>
+                </div>
+            </div>
+        `;
     }
 
-    function getMetaForCategory(catId, val) {
-        if (catId === 'reconhecimento') return `${Math.floor(val * 25).toLocaleString()} pessoas alcançadas`;
-        if (catId === 'oferta') return `${Math.floor(val * 0.5).toLocaleString()} cliques`;
-        if (catId === 'remarketing') return `${Math.floor(val / 60)} leads`;
-        return 'Alta autoridade';
+    function renderAccordion(cat, i) {
+        const subData = {
+            reconhecimento: { obj: 'Alcance e Engajamento', meta: '45.000 pessoas alcançadas' },
+            oferta: { obj: 'Conversão', meta: '2.500 cliques' },
+            remarketing: { obj: 'Conversão', meta: '70 leads' },
+            prova_social: { obj: 'Autoridade e reforço', meta: 'Visualização completa' }
+        };
+        const auds = cat.audiences.filter(a => clientData.selections[cat.id].audiences.includes(a.id)).map(a => a.name).join(', ') || 'Padronizado';
+        const cres = cat.creatives.filter(c => clientData.selections[cat.id].creatives.includes(c.id)).map(c => c.name).join(', ') || 'Sugeridos';
+
+        return `
+            <div class="acc-item" id="acc-${cat.id}">
+                <div class="acc-header" onclick="window.toggleAcc('${cat.id}')">
+                    <div class="acc-title">
+                        <span class="acc-badge">${cat.percentage}%</span>
+                        <span class="acc-label">${cat.name}</span>
+                    </div>
+                    <span class="flow-arrow">⌄</span>
+                </div>
+                <div class="acc-content">
+                    <div class="acc-inner">
+                        <div class="acc-block">
+                            <h5>Objetivo</h5>
+                            <p>${subData[cat.id]?.obj || 'Geral'}</p>
+                        </div>
+                        <div class="acc-block">
+                            <h5>Públicos</h5>
+                            <p>${auds}</p>
+                        </div>
+                        <div class="acc-block">
+                            <h5>Criativos</h5>
+                            <p>${cres}</p>
+                        </div>
+                        <div class="acc-block">
+                            <h5>Meta Estimada</h5>
+                            <p>${subData[cat.id]?.meta || '-'}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
-    window.toggleAccordion = (header) => {
-        const item = header.parentElement;
-        const isActive = item.classList.contains('active');
-        document.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
-        if (!isActive) item.classList.add('active');
+    window.toggleAcc = (id) => {
+        const el = document.getElementById(`acc-${id}`);
+        el.classList.toggle('open');
     };
 
-    window.editStrategy = () => { currentStepIndex = 1; renderStep(); };
-
-    window.finalizeAndSave = () => {
-        saveClient();
-        alert('Estratégia salva no histórico do navegador!');
-    };
+    window.goEdit = () => { currentStepIndex = 0; renderStep(); };
+    window.saveStrategy = saveClient;
 
     // Persistence
     function saveClient() {
@@ -339,13 +422,7 @@ async function init() {
         savedClients.push(newClient);
         localStorage.setItem('agro_campaigns', JSON.stringify(savedClients));
         renderSavedClients();
-        currentStepIndex = 0;
-        resetClientData();
-        renderStep();
-    }
-
-    function resetClientData() {
-        clientData = { name: '', budget: 0, selections: { reconhecimento: { audiences: [], creatives: [] }, oferta: { audiences: [], creatives: [] }, remarketing: { audiences: [], creatives: [] }, prova_social: { audiences: [], creatives: [] } } };
+        alert('Estratégia salva com sucesso!');
     }
 
     function renderSavedClients() {
@@ -354,15 +431,21 @@ async function init() {
                 <span>${client.name}</span>
                 <span class="delete-client" onclick="event.stopPropagation(); window.deleteSavedClient(${client.id})">&times;</span>
             </div>
-        `).join('') || '<p style="color:#999; width:100%;">Nenhuma simulação salva.</p>';
+        `).join('') || '<p style="color:#999; margin:auto;">Nenhuma simulação salva.</p>';
     }
 
     window.loadClient = (id) => {
         const client = savedClients.find(c => c.id === id);
-        if (client) { clientData = JSON.parse(JSON.stringify(client)); currentStepIndex = 5; renderStep(); savedClientsList.classList.add('hidden'); }
+        if (client) {
+            clientData = JSON.parse(JSON.stringify(client));
+            currentStepIndex = 5;
+            renderStep();
+            savedClientsList.classList.add('hidden');
+        }
     };
 
     window.deleteSavedClient = (id) => {
+        if (!confirm('Excluir esta simulação?')) return;
         savedClients = savedClients.filter(c => c.id !== id);
         localStorage.setItem('agro_campaigns', JSON.stringify(savedClients));
         renderSavedClients();
