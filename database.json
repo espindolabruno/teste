@@ -1,0 +1,63 @@
+{
+  "categories": [
+    {
+      "id": "reconhecimento",
+      "name": "Reconhecimento da Marca (Frio)",
+      "percentage": 15,
+      "audiences": [
+        "Interesses no agro",
+        "Interesses em produtos específicos"
+      ],
+      "creatives": [
+        "Vídeo Institucional",
+        "Dicas de manejo",
+        "Bastidores da produção"
+      ]
+    },
+    {
+      "id": "oferta",
+      "name": "Oferta de Produto (Frio)",
+      "percentage": 40,
+      "audiences": [
+        "Pesquisando",
+        "Interesses em compra"
+      ],
+      "creatives": [
+        "Catálogo de produtos",
+        "Promoção do mês",
+        "Benefícios diretos"
+      ]
+    },
+    {
+      "id": "remarketing",
+      "name": "Remarketing",
+      "percentage": 35,
+      "audiences": [
+        "Acessaram o site",
+        "Assistiram 15s de vídeo",
+        "Engajaram redes sociais",
+        "Clicaram em anúncio"
+      ],
+      "creatives": [
+        "Depoimento de cliente",
+        "Quebra de objeção",
+        "Lembrete de oferta"
+      ]
+    },
+    {
+      "id": "prova_social",
+      "name": "Prova Social",
+      "percentage": 10,
+      "audiences": [
+        "Públicos quentes",
+        "Engajados"
+      ],
+      "creatives": [
+        "Dia a dia da empresa",
+        "Entregas realizadas",
+        "Equipe técnica",
+        "Produção em campo"
+      ]
+    }
+  ]
+}
