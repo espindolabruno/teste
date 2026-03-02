@@ -181,10 +181,16 @@ async function init() {
                                         onchange="window.updateCampaignActive('${cat.id}', this.checked)">
                                     <label for="check-${cat.id}">${cat.name}</label>
                                 </div>
-                                <div class="config-input">
-                                    <input type="number" value="${setting.percentage}" ${setting.active ? '' : 'disabled'}
-                                        oninput="window.updateCampaignPerc('${cat.id}', this.value)">
-                                    <span>%</span>
+                                <div class="config-input-group">
+                                    <div class="config-slider">
+                                        <input type="range" min="0" max="100" step="5" value="${setting.percentage}" ${setting.active ? '' : 'disabled'}
+                                            oninput="window.updateCampaignPerc('${cat.id}', this.value)">
+                                    </div>
+                                    <div class="config-value">
+                                        <input type="number" value="${setting.percentage}" ${setting.active ? '' : 'disabled'}
+                                            oninput="window.updateCampaignPerc('${cat.id}', this.value)">
+                                        <span>%</span>
+                                    </div>
                                 </div>
                             </div>
                         `;
