@@ -13,9 +13,11 @@ async function init() {
     // App State
     let database = null;
     let currentStepIndex = 0;
+    const TOTAL_STEPS = 6; // 0: Start, 1: Config, 2-5: Campaigns, 6: Dashboard
     let clientData = {
         name: '',
         budget: 0,
+        campaignSettings: {}, // { id: { active: true, percentage: X } }
         selections: {
             reconhecimento: { audiences: [], creatives: [] },
             oferta: { audiences: [], creatives: [] },
@@ -29,6 +31,15 @@ async function init() {
     try {
         const response = await fetch('database.json');
         database = await response.json();
+
+        // Initialize default settings from database
+        database.categories.forEach(cat => {
+            clientData.campaignSettings[cat.id] = {
+                active: true,
+                percentage: cat.percentage
+            };
+        });
+
         renderStep();
         renderSavedClients();
     } catch (error) {
@@ -38,16 +49,23 @@ async function init() {
     // Global Enter Key Listener
     document.addEventListener('keydown', (e) => {
         if (e.key === 'Enter') {
-            if (currentStepIndex < 5) nextBtn.click();
+            if (currentStepIndex < TOTAL_STEPS) nextBtn.click();
         }
     });
 
     // Navigation Events
     nextBtn.addEventListener('click', () => {
         if (currentStepIndex === 0 && !validateStep0()) return;
+        if (currentStepIndex === 1 && !validateStep1()) return;
 
-        if (currentStepIndex < 5) {
+        if (currentStepIndex < TOTAL_STEPS) {
             currentStepIndex++;
+            // Skip inactive campaigns
+            while (currentStepIndex >= 2 && currentStepIndex <= 5) {
+                const cat = database.categories[currentStepIndex - 2];
+                if (clientData.campaignSettings[cat.id].active) break;
+                currentStepIndex++;
+            }
             renderStep();
         } else {
             saveClient();
@@ -57,6 +75,12 @@ async function init() {
     prevBtn.addEventListener('click', () => {
         if (currentStepIndex > 0) {
             currentStepIndex--;
+            // Skip inactive campaigns
+            while (currentStepIndex >= 2 && currentStepIndex <= 5) {
+                const cat = database.categories[currentStepIndex - 2];
+                if (clientData.campaignSettings[cat.id].active) break;
+                currentStepIndex--;
+            }
             renderStep();
         }
     });
@@ -78,11 +102,15 @@ async function init() {
                 renderStep0();
                 progressBarContainer.classList.remove('hidden');
                 wizardNav.classList.remove('hidden');
-            } else if (currentStepIndex >= 1 && currentStepIndex <= 4) {
+            } else if (currentStepIndex === 1) {
+                renderStep1();
+                progressBarContainer.classList.remove('hidden');
+                wizardNav.classList.remove('hidden');
+            } else if (currentStepIndex >= 2 && currentStepIndex <= 5) {
                 renderCampaignStep();
                 progressBarContainer.classList.remove('hidden');
                 wizardNav.classList.remove('hidden');
-            } else if (currentStepIndex === 5) {
+            } else if (currentStepIndex === 6) {
                 document.body.classList.add('dashboard-mode');
                 renderDashboard();
                 progressBarContainer.classList.add('hidden');
@@ -95,7 +123,7 @@ async function init() {
     }
 
     function updateProgress() {
-        const progress = (currentStepIndex / 5) * 100;
+        const progress = (currentStepIndex / TOTAL_STEPS) * 100;
         progressBar.style.setProperty('--progress', `${progress}%`);
         dots.forEach((dot, idx) => {
             dot.classList.toggle('active', idx === currentStepIndex);
@@ -105,7 +133,7 @@ async function init() {
 
     function updateNavButtons() {
         prevBtn.disabled = currentStepIndex === 0;
-        nextBtn.innerText = currentStepIndex === 5 ? 'Salvar Estratégia' : 'Próximo';
+        nextBtn.innerText = currentStepIndex === 6 ? 'Salvar Estratégia' : 'Próximo';
     }
 
     // Step 0: Budget & Name
@@ -132,6 +160,74 @@ async function init() {
         budgetInp.addEventListener('input', (e) => clientData.budget = parseFloat(e.target.value) || 0);
     }
 
+    // Step 1: Campaign Configuration
+    function renderStep1() {
+        const totalPerc = Object.values(clientData.campaignSettings)
+            .filter(s => s.active)
+            .reduce((acc, s) => acc + s.percentage, 0);
+
+        currentStepContainer.innerHTML = `
+            <div class="step-card">
+                <h2 class="step-title">Configuração das Campanhas</h2>
+                <p class="step-desc">Selecione quais campanhas farão parte da estratégia e ajuste as porcentagens de verba.</p>
+                
+                <div class="campaign-config-list">
+                    ${database.categories.map(cat => {
+            const setting = clientData.campaignSettings[cat.id];
+            return `
+                            <div class="config-row ${setting.active ? '' : 'inactive'}">
+                                <div class="config-info">
+                                    <input type="checkbox" id="check-${cat.id}" ${setting.active ? 'checked' : ''} 
+                                        onchange="window.updateCampaignActive('${cat.id}', this.checked)">
+                                    <label for="check-${cat.id}">${cat.name}</label>
+                                </div>
+                                <div class="config-input">
+                                    <input type="number" value="${setting.percentage}" ${setting.active ? '' : 'disabled'}
+                                        oninput="window.updateCampaignPerc('${cat.id}', this.value)">
+                                    <span>%</span>
+                                </div>
+                            </div>
+                        `;
+        }).join('')}
+                </div>
+
+                <div class="total-indicator ${totalPerc !== 100 ? 'error' : 'success'}">
+                    <span>Total Distribuído: <strong>${totalPerc}%</strong></span>
+                    ${totalPerc !== 100 ? `<p class="error-msg">A soma das porcentagens deve ser exatamente 100%.</p>` : ''}
+                </div>
+            </div>
+        `;
+    }
+
+    window.updateCampaignActive = (id, active) => {
+        clientData.campaignSettings[id].active = active;
+        renderStep1();
+    };
+
+    window.updateCampaignPerc = (id, val) => {
+        clientData.campaignSettings[id].percentage = parseFloat(val) || 0;
+        renderStep1();
+    };
+
+    function validateStep1() {
+        const totalPerc = Object.values(clientData.campaignSettings)
+            .filter(s => s.active)
+            .reduce((acc, s) => acc + s.percentage, 0);
+
+        if (totalPerc !== 100) {
+            alert('A soma das porcentagens das campanhas ativas deve ser 100%. Atualmente é ' + totalPerc + '%.');
+            return false;
+        }
+
+        const activeCount = Object.values(clientData.campaignSettings).filter(s => s.active).length;
+        if (activeCount === 0) {
+            alert('Selecione pelo menos uma campanha.');
+            return false;
+        }
+
+        return true;
+    }
+
     window.recommendStrategy = () => {
         const nameInp = document.getElementById('inputClientName');
         const budgetInp = document.getElementById('inputBudget');
@@ -141,11 +237,18 @@ async function init() {
         }
         clientData.name = nameInp.value;
         clientData.budget = parseFloat(budgetInp.value);
+
+        // Reset to defaults from database in case user messed up
         database.categories.forEach(cat => {
+            clientData.campaignSettings[cat.id] = {
+                active: true,
+                percentage: cat.percentage
+            };
             clientData.selections[cat.id].audiences = cat.audiences.map(a => a.id);
             clientData.selections[cat.id].creatives = cat.creatives.map(c => c.id);
         });
-        currentStepIndex = 5;
+
+        currentStepIndex = 6;
         renderStep();
     };
 
@@ -158,13 +261,17 @@ async function init() {
     }
 
     function renderCampaignStep() {
-        const cat = database.categories[currentStepIndex - 1];
-        const amount = (clientData.budget * (cat.percentage / 100)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const cat = database.categories[currentStepIndex - 2];
+        const setting = clientData.campaignSettings[cat.id];
+        const amount = (clientData.budget * (setting.percentage / 100)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
         currentStepContainer.innerHTML = `
             <div class="step-card">
                 <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
-                    <h2 class="step-title">${cat.name}</h2>
+                    <div>
+                        <h2 class="step-title">${cat.name}</h2>
+                        <span class="perc-badge">${setting.percentage}% da verba</span>
+                    </div>
                     <span class="acc-badge" style="font-size:1rem; padding: 0.5rem 1rem;">Verba: ${amount}</span>
                 </div>
                 <p class="step-desc">Selecione os públicos e criativos ideais para esta etapa.</p>
@@ -251,7 +358,9 @@ async function init() {
                     <section class="dist-section">
                         <h3 class="dist-section-title">Distribuição de Verba</h3>
                         <div class="dist-list">
-                            ${database.categories.map(cat => renderDistCard(cat)).join('')}
+                            ${database.categories
+                .filter(cat => clientData.campaignSettings[cat.id].active)
+                .map(cat => renderDistCard(cat)).join('')}
                             <div class="dist-card total-card">
                                 <span class="dist-name">TOTAL</span>
                                 <div class="dist-bar-cont">
@@ -269,10 +378,9 @@ async function init() {
                         <h3 class="dist-section-title">Funil de Vendas</h3>
                         <div class="funnel-card">
                             <div class="funnel-visual">
-                                <div class="funnel-step">RECONHECIMENTO</div>
-                                <div class="funnel-step">OFERTA</div>
-                                <div class="funnel-step">REMARKETING</div>
-                                <div class="funnel-step">PROVA SOCIAL</div>
+                                ${database.categories
+                .filter(cat => clientData.campaignSettings[cat.id].active)
+                .map(cat => `<div class="funnel-step">${cat.id.toUpperCase().replace('_', ' ')}</div>`).join('')}
                                 <div class="funnel-step">CONVERSÃO</div>
                             </div>
                         </div>
@@ -281,7 +389,9 @@ async function init() {
                     <section class="accordion-cont">
                         <h3 class="dist-section-title">Detalhamento por Etapa</h3>
                         <div class="accordion-list">
-                            ${database.categories.map((cat, i) => renderAccordion(cat, i)).join('')}
+                            ${database.categories
+                .filter(cat => clientData.campaignSettings[cat.id].active)
+                .map((cat, i) => renderAccordion(cat, i)).join('')}
                         </div>
                     </section>
 
@@ -321,22 +431,24 @@ async function init() {
     }
 
     function renderDistCard(cat) {
-        const val = (clientData.budget * (cat.percentage / 100)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+        const setting = clientData.campaignSettings[cat.id];
+        const val = (clientData.budget * (setting.percentage / 100)).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
         return `
             <div class="dist-card">
                 <span class="dist-name">${cat.name}</span>
                 <div class="dist-bar-cont">
-                    <div class="dist-bar-fill" style="width: ${cat.percentage}%"></div>
+                    <div class="dist-bar-fill" style="width: ${setting.percentage}%"></div>
                 </div>
                 <div class="dist-val-group">
                     <span class="dist-val">${val}</span>
-                    <span class="dist-perc">${cat.percentage}%</span>
+                    <span class="dist-perc">${setting.percentage}%</span>
                 </div>
             </div>
         `;
     }
 
     function renderAccordion(cat, i) {
+        const setting = clientData.campaignSettings[cat.id];
         const subData = {
             reconhecimento: { obj: 'Alcance e Engajamento', meta: '45.000 pessoas alcançadas' },
             oferta: { obj: 'Conversão', meta: '2.500 cliques' },
@@ -356,7 +468,7 @@ async function init() {
             <div class="acc-item" id="acc-${cat.id}">
                 <div class="acc-header" onclick="window.toggleAcc('${cat.id}')">
                     <div class="acc-title">
-                        <span class="acc-badge">${cat.percentage}%</span>
+                        <span class="acc-badge">${setting.percentage}%</span>
                         <span class="acc-label">${cat.name}</span>
                     </div>
                     <span class="flow-arrow">⌄</span>

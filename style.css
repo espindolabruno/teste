@@ -823,3 +823,117 @@ footer {
         gap: 1.5rem;
     }
 }
+
+/* Campaign Config Step */
+.campaign-config-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin: 2rem 0;
+}
+
+.config-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.2rem;
+    background: #f8fafc;
+    border-radius: 12px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.2s ease;
+}
+
+.config-row.inactive {
+    opacity: 0.5;
+    background: #f1f5f9;
+}
+
+.config-info {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.config-info input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    cursor: pointer;
+    accent-color: var(--secondary-color);
+}
+
+.config-info label {
+    font-weight: 700;
+    color: var(--primary-color);
+    cursor: pointer;
+}
+
+.config-input {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.config-input input {
+    width: 70px;
+    padding: 0.6rem;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 800;
+    font-family: 'Outfit', sans-serif;
+    color: var(--secondary-color);
+}
+
+.config-input input:focus {
+    border-color: var(--secondary-color);
+    outline: none;
+}
+
+.config-input span {
+    font-weight: 800;
+    color: #a0aec0;
+}
+
+.total-indicator {
+    padding: 1.5rem;
+    border-radius: 12px;
+    text-align: center;
+    margin-top: 2rem;
+    transition: all 0.3s ease;
+}
+
+.total-indicator.success {
+    background: #ecfdf5;
+    color: #065f46;
+    border: 1px solid #10b981;
+}
+
+.total-indicator.error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #ef4444;
+}
+
+.total-indicator strong {
+    font-size: 1.8rem;
+    display: block;
+}
+
+.error-msg {
+    font-size: 0.875rem;
+    margin-top: 0.5rem;
+    font-weight: 600;
+}
+
+.perc-badge {
+    background: #f0f7f4;
+    color: var(--secondary-color);
+    padding: 0.3rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.7rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    margin-top: 0.5rem;
+    display: inline-block;
+    border: 1px solid rgba(45, 106, 79, 0.1);
+}
