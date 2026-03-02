@@ -162,9 +162,7 @@ async function init() {
 
     // Step 1: Campaign Configuration
     function renderStep1() {
-        const totalPerc = Object.values(clientData.campaignSettings)
-            .filter(s => s.active)
-            .reduce((acc, s) => acc + s.percentage, 0);
+        const totalPerc = calculateTotalPerc();
 
         currentStepContainer.innerHTML = `
             <div class="step-card">
@@ -175,7 +173,7 @@ async function init() {
                     ${database.categories.map(cat => {
             const setting = clientData.campaignSettings[cat.id];
             return `
-                            <div class="config-row ${setting.active ? '' : 'inactive'}">
+                            <div class="config-row ${setting.active ? '' : 'inactive'}" id="row-${cat.id}">
                                 <div class="config-info">
                                     <input type="checkbox" id="check-${cat.id}" ${setting.active ? 'checked' : ''} 
                                         onchange="window.updateCampaignActive('${cat.id}', this.checked)">
@@ -183,12 +181,12 @@ async function init() {
                                 </div>
                                 <div class="config-input-group">
                                     <div class="config-slider">
-                                        <input type="range" min="0" max="100" step="5" value="${setting.percentage}" ${setting.active ? '' : 'disabled'}
-                                            oninput="window.updateCampaignPerc('${cat.id}', this.value)">
+                                        <input type="range" id="slider-${cat.id}" min="0" max="100" step="5" value="${setting.percentage}" ${setting.active ? '' : 'disabled'}
+                                            oninput="window.updateCampaignPerc('${cat.id}', this.value, 'slider')">
                                     </div>
                                     <div class="config-value">
-                                        <input type="number" value="${setting.percentage}" ${setting.active ? '' : 'disabled'}
-                                            oninput="window.updateCampaignPerc('${cat.id}', this.value)">
+                                        <input type="number" id="num-${cat.id}" value="${setting.percentage}" ${setting.active ? '' : 'disabled'}
+                                            oninput="window.updateCampaignPerc('${cat.id}', this.value, 'num')">
                                         <span>%</span>
                                     </div>
                                 </div>
@@ -197,28 +195,70 @@ async function init() {
         }).join('')}
                 </div>
 
-                <div class="total-indicator ${totalPerc !== 100 ? 'error' : 'success'}">
-                    <span>Total Distribuído: <strong>${totalPerc}%</strong></span>
-                    ${totalPerc !== 100 ? `<p class="error-msg">A soma das porcentagens deve ser exatamente 100%.</p>` : ''}
+                <div id="totalIndicator" class="total-indicator ${totalPerc !== 100 ? 'error' : 'success'}">
+                    <span>Total Distribuído: <strong id="totalPercValue">${totalPerc}%</strong></span>
+                    <p id="totalErrorMessage" class="error-msg ${totalPerc !== 100 ? '' : 'hidden'}">A soma das porcentagens deve ser exatamente 100%.</p>
                 </div>
             </div>
         `;
     }
 
-    window.updateCampaignActive = (id, active) => {
-        clientData.campaignSettings[id].active = active;
-        renderStep1();
-    };
-
-    window.updateCampaignPerc = (id, val) => {
-        clientData.campaignSettings[id].percentage = parseFloat(val) || 0;
-        renderStep1();
-    };
-
-    function validateStep1() {
-        const totalPerc = Object.values(clientData.campaignSettings)
+    function calculateTotalPerc() {
+        return Object.values(clientData.campaignSettings)
             .filter(s => s.active)
             .reduce((acc, s) => acc + s.percentage, 0);
+    }
+
+    window.updateCampaignActive = (id, active) => {
+        clientData.campaignSettings[id].active = active;
+
+        // Surgical DOM update for activation
+        const row = document.getElementById(`row-${id}`);
+        const slider = document.getElementById(`slider-${id}`);
+        const num = document.getElementById(`num-${id}`);
+
+        row.classList.toggle('inactive', !active);
+        slider.disabled = !active;
+        num.disabled = !active;
+
+        updateTotalDisplay();
+    };
+
+    window.updateCampaignPerc = (id, val, source) => {
+        const perc = parseFloat(val) || 0;
+        clientData.campaignSettings[id].percentage = perc;
+
+        // Sync the other input
+        if (source === 'slider') {
+            document.getElementById(`num-${id}`).value = perc;
+        } else {
+            document.getElementById(`slider-${id}`).value = perc;
+        }
+
+        updateTotalDisplay();
+    };
+
+    function updateTotalDisplay() {
+        const totalPerc = calculateTotalPerc();
+        const indicator = document.getElementById('totalIndicator');
+        const valueDisplay = document.getElementById('totalPercValue');
+        const errorMsg = document.getElementById('totalErrorMessage');
+
+        if (!indicator) return;
+
+        valueDisplay.innerText = `${totalPerc}%`;
+
+        if (totalPerc !== 100) {
+            indicator.className = 'total-indicator error';
+            errorMsg.classList.remove('hidden');
+        } else {
+            indicator.className = 'total-indicator success';
+            errorMsg.classList.add('hidden');
+        }
+    }
+
+    function validateStep1() {
+        const totalPerc = calculateTotalPerc();
 
         if (totalPerc !== 100) {
             alert('A soma das porcentagens das campanhas ativas deve ser 100%. Atualmente é ' + totalPerc + '%.');
